@@ -15,12 +15,6 @@ export default function Home() {
 		<div className="grid grid-rows-[20px_1fr_20px] min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
 			<div className="flex justify-between items-center">
 				<p className="text-4xl font-black">Linear Regression Visualizer</p>
-				<div
-					className="hover:cursor-pointer hover:bg-indigo-800 active:bg-indigo-900 bg-indigo-700 rounded-full shadow-sm shadow-indigo-300 p-3 font-bold"
-					onClick={() => console.log('Settings clicked')}
-				>
-					Settings
-				</div>
 			</div>
 			<div className="flex flex-col items-center gap-4">
 				<div className="w-full h-96">
