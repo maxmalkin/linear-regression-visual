@@ -1,19 +1,20 @@
-import * as tf from "@tensorflow/tfjs";
+import * as tf from '@tensorflow/tfjs';
 
 function createModel() {
 	const model = tf.sequential();
 
-	model.add(tf.layers.dense({ units: 3, inputShape: [1], activation: "relu" }));
+	model.add(tf.layers.dense({ units: 3, inputShape: [1], activation: 'relu' }));
+	model.add(tf.layers.dense({ units: 2 }));
 	model.add(tf.layers.dense({ units: 1 }));
 
 	return model;
 }
 
-const createData = () => {
+export function createData() {
 	const xData = tf.linspace(0, 1, 100);
 	const yData = tf.add(tf.mul(2, xData), 1).add(tf.randomNormal([100], 0, 0.1));
 	return { x: xData, y: yData };
-};
+}
 
 const data = createData();
 
