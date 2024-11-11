@@ -14,7 +14,10 @@ export default function Home() {
 
 	const handleUseSampleData = () => {
 		const sampleData = createData();
-		setData(sampleData);
+		setData({
+			x: tf.tensor(sampleData.x.arraySync()),
+			y: tf.tensor(sampleData.y.arraySync()),
+		});
 		const newModel = createModel();
 		newModel.compile({
 			optimizer: tf.train.sgd(0.01),
