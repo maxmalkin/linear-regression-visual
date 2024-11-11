@@ -1,14 +1,45 @@
 'use client';
 import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
-import { createData } from '../model/model';
+import { createData, createModel, trainModel } from '../model/model';
+import * as tf from '@tensorflow/tfjs';
 
 export default function Home() {
 	const [data, setData] = useState(null);
+	const [model, setModel] = useState(null);
+	const [trainingResults, setTrainingResults] = useState({
+		loss: null,
+		weights: null,
+	});
 
 	const handleUseSampleData = () => {
 		const sampleData = createData();
 		setData(sampleData);
+		const newModel = createModel();
+		newModel.compile({
+			optimizer: tf.train.sgd(0.01),
+			loss: (predicted, actual) => predicted.sub(actual).square().mean(),
+		});
+		setModel(newModel);
+		setTrainingResults({ loss: null, weights: null });
+	};
+
+	const handleTrainModel = async () => {
+		if (data && model) {
+			await trainModel(model, data);
+
+			const weights = model.getWeights();
+			const slope = weights[0].dataSync()[0];
+			const bias = weights[1].dataSync()[0];
+
+			const finalLossTensor = await model.evaluate(
+				data.x.expandDims(1),
+				data.y.expandDims(1)
+			);
+			const finalLoss = finalLossTensor.dataSync()[0];
+
+			setTrainingResults({ loss: finalLoss, weights: { slope, bias } });
+		}
 	};
 
 	return (
@@ -28,34 +59,49 @@ export default function Home() {
 									type: 'scatter',
 									marker: { color: '#39ff14' },
 								},
+								...(trainingResults.weights
+									? [
+											{
+												x: [0, 1],
+												y: [
+													trainingResults.weights.bias,
+													trainingResults.weights.slope +
+														trainingResults.weights.bias,
+												],
+												mode: 'lines',
+												type: 'scatter',
+												line: { color: '#00bfff', width: 2 },
+											},
+									  ]
+									: []),
 							]}
 							layout={{
 								title: {
 									text: 'Sample Data',
 									font: {
-										color: 'white',
+										color: '#d1d5db',
 									},
 								},
 								xaxis: {
 									title: {
 										text: 'X',
 										font: {
-											color: 'white',
+											color: '#d1d5db',
 										},
 									},
 									tickfont: {
-										color: 'white',
+										color: '#d1d5db',
 									},
 								},
 								yaxis: {
 									title: {
 										text: 'Y',
 										font: {
-											color: 'white',
+											color: '#d1d5db',
 										},
 									},
 									tickfont: {
-										color: 'white',
+										color: '#d1d5db',
 									},
 								},
 								plot_bgcolor: '#0a0a0a',
@@ -68,7 +114,7 @@ export default function Home() {
 							}}
 						/>
 					) : (
-						<div className="flex items-center justify-center h-full text-gray-500">
+						<div className="flex items-center justify-center h-full text-gray-300">
 							Data will appear here.
 						</div>
 					)}
@@ -79,6 +125,21 @@ export default function Home() {
 				>
 					{data ? 'Generate New Sample' : 'Generate Sample Data'}
 				</button>
+				{data && model && (
+					<button
+						className="px-4 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 active:bg-green-800 shadow-sm"
+						onClick={handleTrainModel}
+					>
+						Train Model
+					</button>
+				)}
+				{trainingResults.loss !== null && (
+					<div className="text-gray-300">
+						<p>Final Loss: {trainingResults.loss.toFixed(4)}</p>
+						<p>Slope: {trainingResults.weights.slope.toFixed(4)}</p>
+						<p>Bias: {trainingResults.weights.bias.toFixed(4)}</p>
+					</div>
+				)}
 			</div>
 		</div>
 	);

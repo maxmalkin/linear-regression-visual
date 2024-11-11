@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 
-function createModel() {
+export function createModel() {
 	const model = tf.sequential();
 
 	model.add(tf.layers.dense({ units: 3, inputShape: [1], activation: 'relu' }));
@@ -9,14 +9,11 @@ function createModel() {
 
 	return model;
 }
-
 export function createData() {
 	const xData = tf.linspace(0, 1, 100);
 	const yData = tf.add(tf.mul(2, xData), 1).add(tf.randomNormal([100], 0, 0.1));
 	return { x: xData, y: yData };
 }
-
-const data = createData();
 
 function loss(predicted, actual) {
 	return predicted.sub(actual).square().mean();
@@ -28,7 +25,7 @@ model.compile({
 	loss: loss,
 });
 
-async function trainModel() {
+export async function trainModel(model, data) {
 	await model.fit(data.x.expandDims(1), data.y.expandDims(1), {
 		epochs: 50,
 		callbacks: {
