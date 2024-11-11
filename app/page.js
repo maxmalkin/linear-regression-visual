@@ -32,20 +32,50 @@ export default function Home() {
 									y: data.y.arraySync(),
 									mode: 'markers',
 									type: 'scatter',
-									marker: { color: 'blue' },
+									marker: { color: '#39ff14' },
 								},
 							]}
 							layout={{
-								title: 'Sample Data',
-								xaxis: { title: 'X Data' },
-								yaxis: { title: 'Y Data' },
+								title: {
+									text: 'Sample Data',
+									font: {
+										color: 'white',
+									},
+								},
+								xaxis: {
+									title: {
+										text: 'X',
+										font: {
+											color: 'white',
+										},
+									},
+									tickfont: {
+										color: 'white',
+									},
+								},
+								yaxis: {
+									title: {
+										text: 'Y',
+										font: {
+											color: 'white',
+										},
+									},
+									tickfont: {
+										color: 'white',
+									},
+								},
+								plot_bgcolor: '#0a0a0a',
+								paper_bgcolor: '#0a0a0a',
 								autosize: true,
 							}}
-							style={{ width: '100%', height: '100%' }}
+							style={{
+								width: '100%',
+								height: '100%',
+							}}
 						/>
 					) : (
 						<div className="flex items-center justify-center h-full text-gray-500">
-							Graph Placeholder
+							Data will appear here.
 						</div>
 					)}
 				</div>
