@@ -1,19 +1,19 @@
 'use client';
 import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
-import { createModel, createData, trainModel } from '../model/model';
-import * as tf from '@tensorflow/tfjs';
+import { createModel, createData } from '../model/model';
 import Link from 'next/link';
-import Image from 'next/image';
+import { Progress } from '@nextui-org/react';
 
 export default function Home() {
 	const [data, setData] = useState(null);
 	const [trainingResults, setTrainingResults] = useState({
 		loss: null,
-		weights: { slope: null, bias: null },
 		lineOfBestFit: { x: [], y: [] },
 	});
 	const [model, setModel] = useState(createModel());
+	const [isTraining, setIsTraining] = useState(false);
+	const [epochProgress, setEpochProgress] = useState(0);
 
 	const handleTrainModel = async () => {
 		const sampleData = createData();
@@ -22,30 +22,29 @@ export default function Home() {
 			y: sampleData.y.arraySync(),
 		});
 
-		await trainModel(model, sampleData);
+		setIsTraining(true);
+		const totalEpochs = 200;
 
-		const weights = model.getWeights();
-		const slopeTensor = weights[0];
-		const biasTensor = weights[1];
-
-		const slope = slopeTensor.arraySync()[0][0];
-		const bias = biasTensor.arraySync()[0];
-
-		const xFit = sampleData.x.arraySync();
-		const yFit = xFit.map((x) => slope * x + bias);
-
-		const loss = (
-			await model.evaluate(
-				sampleData.x.expandDims(1),
-				sampleData.y.expandDims(1)
-			)
-		).dataSync()[0];
-
-		setTrainingResults({
-			loss,
-			weights: { slope, bias },
-			lineOfBestFit: { x: xFit, y: yFit },
+		await model.fit(sampleData.x.expandDims(1), sampleData.y.expandDims(1), {
+			epochs: totalEpochs,
+			callbacks: {
+				onEpochEnd: async (epoch, logs) => {
+					const weights = model.getWeights();
+					const slope = (await weights[0].data())[0];
+					const bias = (await weights[1].data())[0];
+					const xFit = sampleData.x.arraySync();
+					const yFit = xFit.map((x) => slope * x + bias);
+					setTrainingResults({
+						loss: logs.loss,
+						lineOfBestFit: { x: xFit, y: yFit },
+					});
+					setEpochProgress(epoch + 1);
+				},
+			},
 		});
+
+		setIsTraining(false);
+		setEpochProgress(0);
 	};
 
 	return (
@@ -76,7 +75,7 @@ export default function Home() {
 									y: trainingResults.lineOfBestFit.y,
 									mode: 'lines',
 									type: 'scatter',
-									line: { color: '#00bfff', width: 2 },
+									line: { color: '#00bfff', width: 3 },
 									name: 'Line of Best Fit',
 								},
 							]}
@@ -124,21 +123,29 @@ export default function Home() {
 						</div>
 					)}
 				</div>
-				<button
-					className="px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 active:bg-blue-800 shadow-sm"
-					onClick={handleTrainModel}
-				>
-					{data ? 'Train New Model' : 'Generate and Train Model'}
-				</button>
+				{isTraining ? (
+					<progress value={epochProgress.toFixed(0) / 200} />
+				) : (
+					<button
+						className="px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 active:bg-blue-800 shadow-sm"
+						onClick={handleTrainModel}
+					>
+						{data ? 'Train New Model' : 'Generate and Train Model'}
+					</button>
+				)}
 				{trainingResults.loss !== null && (
 					<div className="text-gray-300">
-						<p>Final Loss: {trainingResults.loss.toFixed(6)}</p>
-						<p>Slope: {trainingResults.weights.slope.toFixed(4)}</p>
-						<p>Bias: {trainingResults.weights.bias.toFixed(4)}</p>
+						<p>
+							<strong>Epoch:</strong> {epochProgress.toFixed(0)}
+						</p>
+						<p>
+							<strong>Current Loss: </strong>
+							{trainingResults.loss.toFixed(6)}
+						</p>
 					</div>
 				)}
 			</div>
-			<footer className="flex justify-center items-center mt-10 font-light">
+			<footer className="flex justify-center items-center mt-10 font-light underline">
 				<Link href="https://github.com/maxmalkin/linear-regression-visual">
 					Created by Max Malkin, 2024
 				</Link>
