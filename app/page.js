@@ -1,9 +1,12 @@
 'use client';
 import React, { useState } from 'react';
-import Plot from 'react-plotly.js';
 import { createModel, createData } from '../model/model';
 import Link from 'next/link';
 import ProgressBar from '@/components/Progress';
+
+import dynamic from 'next/dynamic';
+
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
 export default function Home() {
 	const [data, setData] = useState(null);
