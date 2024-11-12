@@ -1,48 +1,49 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Plot from 'react-plotly.js';
-import { createData, createModel, trainModel } from '../model/model';
+import { createModel, createData, trainModel } from '../model/model';
 import * as tf from '@tensorflow/tfjs';
 
 export default function Home() {
 	const [data, setData] = useState(null);
-	const [model, setModel] = useState(null);
 	const [trainingResults, setTrainingResults] = useState({
 		loss: null,
-		weights: null,
+		weights: { slope: null, bias: null },
 	});
+	const [model, setModel] = useState(null);
 
-	const handleUseSampleData = () => {
-		const sampleData = createData();
-		setData({
-			x: tf.tensor(sampleData.x.arraySync()),
-			y: tf.tensor(sampleData.y.arraySync()),
-		});
-		const newModel = createModel();
-		newModel.compile({
-			optimizer: tf.train.sgd(0.01),
+	useEffect(() => {
+		const initializedModel = createModel();
+		initializedModel.compile({
+			optimizer: tf.train.adam(0.01),
 			loss: (predicted, actual) => predicted.sub(actual).square().mean(),
 		});
-		setModel(newModel);
-		setTrainingResults({ loss: null, weights: null });
-	};
+		setModel(initializedModel);
+	}, [model]);
 
 	const handleTrainModel = async () => {
-		if (data && model) {
-			await trainModel(model, data);
+		const sampleData = createData();
+		setData({
+			x: sampleData.x.arraySync(),
+			y: sampleData.y.arraySync(),
+		});
 
-			const weights = model.getWeights();
-			const slope = weights[0].dataSync()[0];
-			const bias = weights[1].dataSync()[0];
+		trainModel(model, sampleData);
 
-			const finalLossTensor = await model.evaluate(
-				data.x.expandDims(1),
-				data.y.expandDims(1)
-			);
-			const finalLoss = finalLossTensor.dataSync()[0];
+		const weights = model.getWeights();
+		const slopeTensor = weights[0];
+		const biasTensor = weights[1];
 
-			setTrainingResults({ loss: finalLoss, weights: { slope, bias } });
-		}
+		const slope = slopeTensor.dataSync()[0];
+		const bias = biasTensor.dataSync()[0];
+		const loss = (
+			await model.evaluate(
+				sampleData.x.expandDims(1),
+				sampleData.y.expandDims(1)
+			)
+		).dataSync()[0];
+
+		setTrainingResults({ loss, weights: { slope, bias } });
 	};
 
 	return (
@@ -56,13 +57,13 @@ export default function Home() {
 						<Plot
 							data={[
 								{
-									x: data.x.arraySync(),
-									y: data.y.arraySync(),
+									x: data.x,
+									y: data.y,
 									mode: 'markers',
 									type: 'scatter',
 									marker: { color: '#39ff14' },
 								},
-								...(trainingResults.weights
+								...(trainingResults.weights.slope !== null
 									? [
 											{
 												x: [0, 1],
@@ -124,21 +125,13 @@ export default function Home() {
 				</div>
 				<button
 					className="px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 active:bg-blue-800 shadow-sm"
-					onClick={handleUseSampleData}
+					onClick={handleTrainModel}
 				>
-					{data ? 'Generate New Sample' : 'Generate Sample Data'}
+					{data ? 'Train Model Again' : 'Generate and Train Model'}
 				</button>
-				{data && model && (
-					<button
-						className="px-4 py-2 bg-green-600 text-white font-bold rounded-md hover:bg-green-700 active:bg-green-800 shadow-sm"
-						onClick={handleTrainModel}
-					>
-						Train Model
-					</button>
-				)}
 				{trainingResults.loss !== null && (
 					<div className="text-gray-300">
-						<p>Final Loss: {trainingResults.loss.toFixed(4)}</p>
+						<p>Final Loss: {trainingResults.loss.toFixed(6)}</p>
 						<p>Slope: {trainingResults.weights.slope.toFixed(4)}</p>
 						<p>Bias: {trainingResults.weights.bias.toFixed(4)}</p>
 					</div>

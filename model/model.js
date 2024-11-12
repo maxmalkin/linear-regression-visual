@@ -1,14 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
 
-export function createModel() {
-	const model = tf.sequential();
-
-	model.add(tf.layers.dense({ units: 3, inputShape: [1], activation: 'relu' }));
-	model.add(tf.layers.dense({ units: 2 }));
-	model.add(tf.layers.dense({ units: 1 }));
-
-	return model;
-}
 export function createData() {
 	const xData = tf.linspace(0, 1, 100);
 	const yData = tf.add(tf.mul(2, xData), 1).add(tf.randomNormal([100], 0, 0.1));
@@ -19,12 +10,26 @@ function loss(predicted, actual) {
 	return predicted.sub(actual).square().mean();
 }
 
-const model = createModel();
-model.compile({
-	optimizer: tf.train.sgd(0.01),
-	loss: loss,
-});
+export function createModel() {
+	const model = tf.sequential();
 
+	model.add(
+		tf.layers.dense({ units: 64, inputShape: [1], activation: 'relu' })
+	);
+	model.add(tf.layers.dense({ units: 32 }));
+	model.add(tf.layers.dense({ units: 16 }));
+	model.add(tf.layers.dense({ units: 8 }));
+	model.add(tf.layers.dense({ units: 4 }));
+	model.add(tf.layers.dense({ units: 2 }));
+	model.add(tf.layers.dense({ units: 1 }));
+
+	model.compile({
+		optimizer: tf.train.adam(0.01),
+		loss: (predicted, actual) => predicted.sub(actual).square().mean(),
+	});
+
+	return model;
+}
 export async function trainModel(model, data) {
 	await model.fit(data.x.expandDims(1), data.y.expandDims(1), {
 		epochs: 50,
