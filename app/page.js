@@ -1,25 +1,19 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
 import { createModel, createData, trainModel } from '../model/model';
 import * as tf from '@tensorflow/tfjs';
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
 	const [data, setData] = useState(null);
 	const [trainingResults, setTrainingResults] = useState({
 		loss: null,
 		weights: { slope: null, bias: null },
+		lineOfBestFit: { x: [], y: [] },
 	});
-	const [model, setModel] = useState(null);
-
-	useEffect(() => {
-		const initializedModel = createModel();
-		initializedModel.compile({
-			optimizer: tf.train.adam(0.01),
-			loss: (predicted, actual) => predicted.sub(actual).square().mean(),
-		});
-		setModel(initializedModel);
-	}, [model]);
+	const [model, setModel] = useState(createModel());
 
 	const handleTrainModel = async () => {
 		const sampleData = createData();
@@ -28,14 +22,18 @@ export default function Home() {
 			y: sampleData.y.arraySync(),
 		});
 
-		trainModel(model, sampleData);
+		await trainModel(model, sampleData);
 
 		const weights = model.getWeights();
 		const slopeTensor = weights[0];
 		const biasTensor = weights[1];
 
-		const slope = slopeTensor.dataSync()[0];
-		const bias = biasTensor.dataSync()[0];
+		const slope = slopeTensor.arraySync()[0][0];
+		const bias = biasTensor.arraySync()[0];
+
+		const xFit = sampleData.x.arraySync();
+		const yFit = xFit.map((x) => slope * x + bias);
+
 		const loss = (
 			await model.evaluate(
 				sampleData.x.expandDims(1),
@@ -43,15 +41,24 @@ export default function Home() {
 			)
 		).dataSync()[0];
 
-		setTrainingResults({ loss, weights: { slope, bias } });
+		setTrainingResults({
+			loss,
+			weights: { slope, bias },
+			lineOfBestFit: { x: xFit, y: yFit },
+		});
 	};
 
 	return (
 		<div className="grid grid-rows-[20px_1fr_20px] min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-			<div className="flex justify-between items-center">
+			<div className="flex flex-col justify-between">
 				<p className="text-4xl font-black">Linear Regression Visualizer</p>
+				<p className="text-gray-300 mt-3">
+					This is a simple linear regression model visualizer. It allows you to
+					generate a line of best fit and visualize the data points and the line
+					of best fit over each epoch of training.
+				</p>
 			</div>
-			<div className="flex flex-col items-center gap-4">
+			<div className="flex flex-col items-center gap-4 mt-10">
 				<div className="w-full h-96">
 					{data ? (
 						<Plot
@@ -62,22 +69,16 @@ export default function Home() {
 									mode: 'markers',
 									type: 'scatter',
 									marker: { color: '#39ff14' },
+									name: 'Data Points',
 								},
-								...(trainingResults.weights.slope !== null
-									? [
-											{
-												x: [0, 1],
-												y: [
-													trainingResults.weights.bias,
-													trainingResults.weights.slope +
-														trainingResults.weights.bias,
-												],
-												mode: 'lines',
-												type: 'scatter',
-												line: { color: '#00bfff', width: 2 },
-											},
-									  ]
-									: []),
+								{
+									x: trainingResults.lineOfBestFit.x,
+									y: trainingResults.lineOfBestFit.y,
+									mode: 'lines',
+									type: 'scatter',
+									line: { color: '#00bfff', width: 2 },
+									name: 'Line of Best Fit',
+								},
 							]}
 							layout={{
 								title: {
@@ -118,7 +119,7 @@ export default function Home() {
 							}}
 						/>
 					) : (
-						<div className="flex items-center justify-center h-full text-gray-300">
+						<div className="flex items-center justify-center h-full text-gray-300 border-gray-500 border-dashed border-small">
 							Data will appear here.
 						</div>
 					)}
@@ -127,7 +128,7 @@ export default function Home() {
 					className="px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 active:bg-blue-800 shadow-sm"
 					onClick={handleTrainModel}
 				>
-					{data ? 'Train Model Again' : 'Generate and Train Model'}
+					{data ? 'Train New Model' : 'Generate and Train Model'}
 				</button>
 				{trainingResults.loss !== null && (
 					<div className="text-gray-300">
@@ -137,6 +138,11 @@ export default function Home() {
 					</div>
 				)}
 			</div>
+			<footer className="flex justify-center items-center mt-10 font-light">
+				<Link href="https://github.com/maxmalkin/linear-regression-visual">
+					Created by Max Malkin, 2024
+				</Link>
+			</footer>
 		</div>
 	);
 }

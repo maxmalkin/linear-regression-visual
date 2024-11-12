@@ -13,26 +13,19 @@ function loss(predicted, actual) {
 export function createModel() {
 	const model = tf.sequential();
 
-	model.add(
-		tf.layers.dense({ units: 64, inputShape: [1], activation: 'relu' })
-	);
-	model.add(tf.layers.dense({ units: 32 }));
-	model.add(tf.layers.dense({ units: 16 }));
-	model.add(tf.layers.dense({ units: 8 }));
-	model.add(tf.layers.dense({ units: 4 }));
-	model.add(tf.layers.dense({ units: 2 }));
-	model.add(tf.layers.dense({ units: 1 }));
+	model.add(tf.layers.dense({ units: 1, inputShape: [1] }));
 
 	model.compile({
-		optimizer: tf.train.adam(0.01),
-		loss: (predicted, actual) => predicted.sub(actual).square().mean(),
+		optimizer: tf.train.sgd(0.1),
+		loss: 'meanSquaredError',
 	});
 
 	return model;
 }
+
 export async function trainModel(model, data) {
 	await model.fit(data.x.expandDims(1), data.y.expandDims(1), {
-		epochs: 50,
+		epochs: 200,
 		callbacks: {
 			onEpochEnd: (epoch, logs) => {
 				console.log(`Epoch ${epoch + 1}: loss = ${logs.loss}`);
