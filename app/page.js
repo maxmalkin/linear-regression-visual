@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
 import { createModel, createData } from '../model/model';
 import Link from 'next/link';
-import { Progress } from '@nextui-org/react';
+import ProgressBar from '@/components/Progress';
 
 export default function Home() {
 	const [data, setData] = useState(null);
@@ -124,7 +124,7 @@ export default function Home() {
 					)}
 				</div>
 				{isTraining ? (
-					<progress value={epochProgress.toFixed(0) / 200} />
+					<ProgressBar value={epochProgress} max={150} />
 				) : (
 					<button
 						className="px-4 py-2 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 active:bg-blue-800 shadow-sm"
