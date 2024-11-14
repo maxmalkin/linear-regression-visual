@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { createModel, createData } from '../models/linear';
+import { createModel, createData } from '@/models/linear';
 import Link from 'next/link';
 import ProgressBar from '@/components/Progress';
 
