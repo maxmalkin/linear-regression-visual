@@ -1,7 +1,6 @@
 'use client';
 import React, { useState } from 'react';
 import { createModel, createData } from '@/models/linear';
-import Link from 'next/link';
 import ProgressBar from '@/components/Progress';
 
 import dynamic from 'next/dynamic';
@@ -148,11 +147,7 @@ export default function Home() {
 					</div>
 				)}
 			</div>
-			<footer className="flex justify-center items-center mt-10 font-light underline">
-				<Link href="https://github.com/maxmalkin/linear-regression-visual">
-					Created by Max Malkin, 2024
-				</Link>
-			</footer>
+			<Footer />
 		</div>
 	);
 }

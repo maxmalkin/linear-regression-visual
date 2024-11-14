@@ -2,18 +2,16 @@ import * as tf from '@tensorflow/tfjs';
 
 export function createData(n = 2, dataPoints = 10) {
 	const xData = tf.linspace(0, 1, dataPoints);
-	let yData = tf.randomNormal([dataPoints], 0, 0.1);
-
-	for (let i = 0; i <= n; i++) {
-		const coefficient = Math.random() * 10 - 5;
-		yData = yData.add(tf.mul(coefficient, tf.pow(xData, i)));
-	}
-
 	const xExpanded = tf.stack(
 		[...Array(n).keys()].map((i) => tf.pow(xData, i + 1)),
 		1
 	);
 
+	let yData = tf.randomNormal([dataPoints], 0, 0.1);
+	for (let i = 0; i <= n; i++) {
+		const coefficient = Math.random() * 10 - 5;
+		yData = yData.add(tf.mul(coefficient, tf.pow(xData, i)));
+	}
 	return { x: xExpanded, y: yData };
 }
 
@@ -21,13 +19,13 @@ function loss(predicted, actual) {
 	return predicted.sub(actual).square().mean();
 }
 
-export function createModel(n) {
+export function createModel(degree) {
 	const model = tf.sequential();
 
 	model.add(
 		tf.layers.dense({
 			units: 1,
-			inputShape: [n],
+			inputShape: [degree],
 		})
 	);
 
