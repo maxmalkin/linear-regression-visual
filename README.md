@@ -2,6 +2,10 @@
 
 This project is a React-based application that uses TensorFlow.js to train a linear regression model on dynamically generated sample data. It visualizes each epoch of the training process in real-time on a graph.
 
+## Live Demo
+
+The application is hosted at: [https://linear-regression-visual.onrender.com/](https://linear-regression-visual.onrender.com/)
+
 ## Features
 
 - **Dynamic Data Generation**: Generate random sample data for training.
@@ -20,3 +24,4 @@ This project is a React-based application that uses TensorFlow.js to train a lin
 - TensorFlow.js
 - Plotly.js
 - Next.js
+
